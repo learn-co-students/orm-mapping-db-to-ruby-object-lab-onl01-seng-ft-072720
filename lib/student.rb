@@ -1,19 +1,92 @@
+require 'pry'
+
 class Student
   attr_accessor :id, :name, :grade
 
   def self.new_from_db(row)
     # create a new Student object given a row from the database
+    s = self.new
+    s.id = row[0]
+    s.name =  row[1]
+    s.grade = row[2]
+    s 
   end
 
   def self.all
     # retrieve all the rows from the "Students" database
     # remember each row should be a new instance of the Student class
-  end
+      sql = <<-SQL
+        SELECT *
+        FROM students
+      SQL
+   
+      DB[:conn].execute(sql).map do |row|
+        self.new_from_db(row)
+      end
+    end
 
   def self.find_by_name(name)
     # find the student in the database given a name
+    sql = <<-SQL
+      SELECT * FROM students WHERE students.name = name
+    SQL
+
+    collected_student = DB[:conn].execute(sql)
     # return a new instance of the Student class
+    self.new_from_db(collected_student[0])
+    
   end
+
+  def self.all_students_in_grade_9
+    sql = <<-SQL
+    SELECT * FROM students WHERE students.grade = 9
+    SQL
+
+    DB[:conn].execute(sql)
+  end
+
+  def self.students_below_12th_grade
+    sql = <<-SQL
+    SELECT * 
+    FROM students 
+    WHERE students.grade < 12
+    SQL
+    DB[:conn].execute(sql).collect do |row|
+      self.new_from_db(row)
+    end
+  end
+
+  def self.first_X_students_in_grade_10(x)
+    sql = <<-SQL
+    SELECT * FROM students WHERE grade = 10 LIMIT #{x}
+    SQL
+
+    DB[:conn].execute(sql).collect do |row|
+      self.new_from_db(row)
+    end
+
+  end
+
+  def self.first_student_in_grade_10
+    sql = <<-SQL
+    SELECT * FROM students WHERE grade = 10 LIMIT 1
+    SQL
+
+    annoying_that_I_have_to_do_this = DB[:conn].execute(sql).collect do |row|
+      self.new_from_db(row)
+    end
+    annoying_that_I_have_to_do_this[0]
+  end
+
+  def self.all_students_in_grade_X(x)
+    sql = <<-SQL
+    SELECT * FROM students WHERE grade = #{x}
+    SQL
+
+    DB[:conn].execute(sql).collect do |row|
+      self.new_from_db(row)
+  end
+end
   
   def save
     sql = <<-SQL
